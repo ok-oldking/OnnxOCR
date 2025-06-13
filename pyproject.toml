@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onnxocr-ppocrv5"
+version = "0.0.1"
+authors = [
+    { name = "Your Name", email = "your.email@example.com" },
+]
+description = "ONNX-based OCR (PP-OCRv5) inference pipeline with DirectML support."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+keywords = ["ocr", "onnx", "directml", "ppocr", "text detection", "text recognition"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License", # Or MIT, choose one
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "pyclipper",
+    "shapely"
+]
+
+[project.urls]
+Homepage = "https://github.com/ok-oldking/OnnxOCR"
+Repository = "https://github.com/ok-oldking/OnnxOCR"
+Issues = "https://github.com/ok-oldking/OnnxOCR/issues"
+
+# --- Setuptools specific configuration ---
+[tool.setuptools]
+# If you prefer to explicitly list packages instead of finding them:
+# packages = ["onnxocr", "onnxocr.models", "onnxocr.models.ppocrv5"]
+# However, find is usually more convenient.
+# `include-package-data = true` is often used with MANIFEST.in.
+# For pyproject.toml only, package_data is preferred.
+
+[tool.setuptools.packages.find]
+where = ["."]  # "." means the project root directory
+include = ["onnxocr*"] # finds 'onnxocr' and any sub-packages like 'onnxocr.models'
+exclude = ["tests*"]   # exclude 'tests' from being installed as a top-level package
+
+[tool.setuptools.package-data]
+# This section tells setuptools what non-Python files to include in the package.
+# The key is the package name ('onnxocr' in this case).
+# The value is a list of glob patterns relative to that package's directory.
+"onnxocr" = [
+    "models/ppocrv5/ppocrv5_dict.txt",
+    "models/ppocrv5/det/det.onnx",
+    "models/ppocrv5/rec/rec.onnx"
+]
+
+# If you had a CLI script:
+# [project.scripts]
+# onnxocr-cli = "onnxocr.cli:main_cli_function"

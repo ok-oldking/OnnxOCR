@@ -1,0 +1,5 @@
+opencv-python
+onnxruntime-directml
+shapely
+pyclipper
+Pillow

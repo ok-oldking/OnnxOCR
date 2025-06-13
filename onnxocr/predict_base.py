@@ -4,10 +4,12 @@ class PredictBase(object):
     def __init__(self):
         pass
 
-    def get_onnx_session(self, model_dir, use_gpu):
+    def get_onnx_session(self, model_dir, use_gpu, use_dml):
         # 使用gpu
         if use_gpu:
             providers =[('CUDAExecutionProvider',{"cudnn_conv_algo_search": "DEFAULT"}),'CPUExecutionProvider']
+        elif use_dml:
+            providers = ['DmlExecutionProvider', 'CPUExecutionProvider']
         else:
             providers =['CPUExecutionProvider']
 
