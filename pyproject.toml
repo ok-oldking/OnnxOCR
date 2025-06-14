@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "onnxocr-ppocrv5"
-version = "0.0.1"
+name = "onnxocr-ppocrv4"
+version = "0.0.2"
 authors = [
     { name = "Your Name", email = "your.email@example.com" },
 ]
@@ -30,7 +30,8 @@ classifiers = [
 
 dependencies = [
     "pyclipper",
-    "shapely"
+    "shapely",
+    "pillow"
 ]
 
 [project.urls]
@@ -41,7 +42,7 @@ Issues = "https://github.com/ok-oldking/OnnxOCR/issues"
 # --- Setuptools specific configuration ---
 [tool.setuptools]
 # If you prefer to explicitly list packages instead of finding them:
-# packages = ["onnxocr", "onnxocr.models", "onnxocr.models.ppocrv5"]
+# packages = ["onnxocr", "onnxocr.models", "onnxocr.models.ppocrv4"]
 # However, find is usually more convenient.
 # `include-package-data = true` is often used with MANIFEST.in.
 # For pyproject.toml only, package_data is preferred.
@@ -56,9 +57,9 @@ exclude = ["tests*"]   # exclude 'tests' from being installed as a top-level pac
 # The key is the package name ('onnxocr' in this case).
 # The value is a list of glob patterns relative to that package's directory.
 "onnxocr" = [
-    "models/ppocrv5/ppocrv5_dict.txt",
-    "models/ppocrv5/det/det.onnx",
-    "models/ppocrv5/rec/rec.onnx"
+    "models/ppocrv4/ppocrv4_dict.txt",
+    "models/ppocrv4/det/det.onnx",
+    "models/ppocrv4/rec/rec.onnx"
 ]
 
 # If you had a CLI script:

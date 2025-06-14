@@ -26,10 +26,10 @@ class ONNXPaddleOcr(TextSystem):
         super().__init__(params)
 
     def ocr(self, img, det=True, rec=True, cls=True):
-        if cls == True and self.use_angle_cls == False:
-            print(
-                "Since the angle classifier is not initialized, the angle classifier will not be uesd during the forward process"
-            )
+        # if cls == True and self.use_angle_cls == False:
+        #     print(
+        #         "Since the angle classifier is not initialized, the angle classifier will not be uesd during the forward process"
+        #     )
 
         if det and rec:
             ocr_res = []
