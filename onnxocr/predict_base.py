@@ -13,10 +13,10 @@ class PredictBase(object):
         else:
             providers =['CPUExecutionProvider']
 
-        onnx_session = onnxruntime.InferenceSession(model_dir, None,providers=providers)
-
-        # print("providers:", onnxruntime.get_device())
-        return onnx_session
+        with open(model_dir, 'rb') as f:
+            onnx_session = onnxruntime.InferenceSession(f.read(),None,providers=providers)
+            # print("providers:", onnxruntime.get_device())
+            return onnx_session
 
 
     def get_output_name(self, onnx_session):
