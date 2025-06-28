@@ -10,6 +10,7 @@ from .predict_base import PredictBase
 
 class TextRecognizer(PredictBase):
     def __init__(self, args):
+        super().__init__(args.rec_model_dir, args.use_gpu, args.use_dml, args.use_openvino)
         self.rec_image_shape = [int(v) for v in args.rec_image_shape.split(",")]
         self.rec_batch_num = args.rec_batch_num
         self.rec_algorithm = args.rec_algorithm
@@ -19,9 +20,8 @@ class TextRecognizer(PredictBase):
         )
 
         # 初始化模型
-        self.rec_onnx_session = self.get_onnx_session(args.rec_model_dir, args.use_gpu, args.use_dml)
-        self.rec_input_name = self.get_input_name(self.rec_onnx_session)
-        self.rec_output_name = self.get_output_name(self.rec_onnx_session)
+        self.rec_input_name = self.get_input_name()
+        self.rec_output_name = self.get_output_name()
 
     def resize_norm_img(self, img, max_wh_ratio):
         imgC, imgH, imgW = self.rec_image_shape
@@ -313,7 +313,7 @@ class TextRecognizer(PredictBase):
             # img = np.expand_dims(img, axis=0)
             # print(img.shape)
             input_feed = self.get_input_feed(self.rec_input_name, norm_img_batch)
-            outputs = self.rec_onnx_session.run(
+            outputs = self.run(
                 self.rec_output_name, input_feed=input_feed
             )
 

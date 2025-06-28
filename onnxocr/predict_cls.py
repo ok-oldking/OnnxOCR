@@ -9,15 +9,15 @@ from .predict_base import PredictBase
 
 class TextClassifier(PredictBase):
     def __init__(self, args):
+        super().__init__(args.cls_model_dir, args.use_gpu, args.use_dml, args.use_openvino)
         self.cls_image_shape = [int(v) for v in args.cls_image_shape.split(",")]
         self.cls_batch_num = args.cls_batch_num
         self.cls_thresh = args.cls_thresh
         self.postprocess_op = ClsPostProcess(label_list=args.label_list)
 
         # 初始化模型
-        self.cls_onnx_session = self.get_onnx_session(args.cls_model_dir, args.use_gpu, args.use_dml)
-        self.cls_input_name = self.get_input_name(self.cls_onnx_session)
-        self.cls_output_name = self.get_output_name(self.cls_onnx_session)
+        self.cls_input_name = self.get_input_name()
+        self.cls_output_name = self.get_output_name()
 
     def resize_norm_img(self, img):
         imgC, imgH, imgW = self.cls_image_shape
@@ -72,7 +72,7 @@ class TextClassifier(PredictBase):
             norm_img_batch = norm_img_batch.copy()
 
             input_feed = self.get_input_feed(self.cls_input_name, norm_img_batch)
-            outputs = self.cls_onnx_session.run(
+            outputs = self.run(
                 self.cls_output_name, input_feed=input_feed
             )
 
