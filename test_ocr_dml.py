@@ -6,10 +6,10 @@ import time
 #固定到onnx路径·
 # sys.path.append('./paddle_to_onnx/onnx')
 
-model = ONNXPaddleOcr(use_angle_cls=False, use_gpu=False, use_dml=True, use_openvino=True)
+model = ONNXPaddleOcr(use_angle_cls=False, use_gpu=False, use_dml=True, use_openvino=False)
 
 
-img = cv2.imread('./onnxocr/test_images/test_dml.png')
+img = cv2.imread('./onnxocr/test_images/single_letter.png')
 model.ocr(img) #warm up
 s = time.time()
 result = model.ocr(img)

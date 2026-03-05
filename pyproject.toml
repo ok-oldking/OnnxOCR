@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "onnxocr-ppocrv4"
+name = "onnxocr-ppocrv5"
 version = "0.0.5"
 authors = [
     { name = "Your Name", email = "your.email@example.com" },
@@ -56,10 +56,17 @@ exclude = ["tests*"]   # exclude 'tests' from being installed as a top-level pac
 # This section tells setuptools what non-Python files to include in the package.
 # The key is the package name ('onnxocr' in this case).
 # The value is a list of glob patterns relative to that package's directory.
+#"onnxocr" = [
+#    "models/ppocrv4/ppocrv4_dict.txt",
+#    "models/ppocrv4/det/det.onnx",
+#    "models/ppocrv4/rec/rec.onnx"
+#]
+
 "onnxocr" = [
-    "models/ppocrv4/ppocrv4_dict.txt",
-    "models/ppocrv4/det/det.onnx",
-    "models/ppocrv4/rec/rec.onnx"
+    "models/ppocrv5/ppocrv5_dict.txt",
+    "models/ppocrv5/det/det.onnx",
+    "models/ppocrv5/cls/cls.onnx",
+    "models/ppocrv5/rec/rec.onnx"
 ]
 
 # If you had a CLI script:
