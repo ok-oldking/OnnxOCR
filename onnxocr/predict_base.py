@@ -1,5 +1,8 @@
+import numpy as np
+import cv2
+
 class PredictBase(object):
-    def __init__(self, model_dir, use_openvino=False):
+    def __init__(self, model_dir, use_openvino=False, use_npu=False):
         self.is_openvino = use_openvino
         if self.is_openvino:
             import openvino as ov
@@ -8,7 +11,8 @@ class PredictBase(object):
             # Identify hardware
             devices = core.available_devices
             preferred_devices = []
-            if "NPU" in devices: preferred_devices.append("NPU")
+            if use_npu and "NPU" in devices:
+                preferred_devices.append("NPU")
             # if "GPU" in devices: preferred_devices.append("GPU") GPU too slow for dynamic shapes
             preferred_devices.append("CPU")
             
@@ -19,9 +23,10 @@ class PredictBase(object):
             for device in preferred_devices:
                 try:
                     model = core.read_model(model=model_dir)
+                    input_layer = model.inputs[0]
+                    
                     if device == "NPU":
                         try:
-                            input_layer = model.inputs[0]
                             # NPU often requires static shapes. 
                             # Different shapes for detection vs recognition
                             if "det" in model_dir.lower():
@@ -35,6 +40,12 @@ class PredictBase(object):
                                 model.reshape({input_layer.any_name: self.force_shape})
                         except Exception:
                             self.force_shape = None 
+                    else:
+                        # For CPU, ensure dynamic shapes are allowed
+                        try:
+                            model.reshape({input_layer.any_name: [-1, 3, -1, -1]})
+                        except Exception:
+                            pass
                     
                     self.session = core.compile_model(model=model, device_name=device)
                     if device == "NPU":
@@ -53,50 +64,74 @@ class PredictBase(object):
 
     def run(self, output_name, input_feed):
         if self.is_openvino:
-            # NPU handle: if we are on NPU and forced a static shape
+            # Handle NPU/Static shape force
             if getattr(self, "is_npu", False) and getattr(self, "force_shape", None):
-                import cv2
-                import numpy as np
-                
                 target_b, target_c, target_h, target_w = self.force_shape
-                
-                # Dynamic batching for NPU (handles the case where input_feed has more than target_b)
                 input_batch_size = next(iter(input_feed.values())).shape[0]
                 
-                if input_batch_size > target_b or any(input_feed[name].shape != self.force_shape for name in input_feed):
-                    all_outputs = [[] for _ in self.session.outputs]
+                all_outputs = [[] for _ in self.session.outputs]
+                
+                for i in range(0, input_batch_size, target_b):
+                    current_feed = {}
+                    # Meta info to resize detection heatmaps back
+                    # This must be synchronized across all inputs in the batch
+                    batch_resize_info = [] # (orig_h, orig_w, new_h, new_w)
                     
-                    for i in range(0, input_batch_size, target_b):
-                        current_feed = {}
-                        for name in input_feed:
-                            data = input_feed[name]
-                            chunk = data[i:i+target_b]
-                            
-                            # Handle padding if the last chunk is smaller than target_b
-                            if chunk.shape[0] < target_b:
-                                pad_width = [(0, target_b - chunk.shape[0])] + [(0, 0)] * (len(chunk.shape) - 1)
-                                chunk = np.pad(chunk, pad_width, mode='constant')
-                            
-                            # Handle resizing if the chunk shape doesn't match force_shape
-                            if chunk.shape != self.force_shape:
-                                resized_chunk = np.zeros(self.force_shape, dtype=chunk.dtype)
-                                for b in range(target_b):
-                                    # chunk[b] is (C, H, W)
-                                    img = chunk[b].transpose(1, 2, 0)
-                                    img_resized = cv2.resize(img, (target_w, target_h))
-                                    resized_chunk[b] = img_resized.transpose(2, 0, 1)
-                                current_feed[name] = resized_chunk
-                            else:
-                                current_feed[name] = chunk
+                    for name in input_feed:
+                        data = input_feed[name]
+                        chunk = data[i:i+target_b]
                         
-                        chunk_results = self.session(inputs=current_feed)
-                        for j, out in enumerate(self.session.outputs):
-                            res = chunk_results[out]
-                            # Take only what we need (in case we padded)
-                            actual_count = min(target_b, input_batch_size - i)
-                            all_outputs[j].append(res[:actual_count])
+                        # Pad batch if needed
+                        if chunk.shape[0] < target_b:
+                            pad_width = [(0, target_b - chunk.shape[0])] + [(0, 0)] * (len(chunk.shape) - 1)
+                            chunk = np.pad(chunk, pad_width, mode='constant')
+                        
+                        # Adapt spatial shape
+                        if chunk.shape[2:] != (target_h, target_w):
+                            processed_chunk = np.zeros(self.force_shape, dtype=chunk.dtype)
+                            for b in range(target_b):
+                                img = chunk[b].transpose(1, 2, 0) # HWC
+                                oh, ow = img.shape[:2]
+                                
+                                # Letterbox: keep aspect ratio
+                                scale = min(target_w / ow, target_h / oh)
+                                nw, nh = int(ow * scale), int(oh * scale)
+                                
+                                # Use safe resize
+                                if nw > 0 and nh > 0:
+                                    img_resized = cv2.resize(img, (nw, nh))
+                                    processed_chunk[b, :, :nh, :nw] = img_resized.transpose(2, 0, 1)
+                                
+                                if name == next(iter(input_feed)):
+                                    batch_resize_info.append((oh, ow, nh, nw))
+                            current_feed[name] = processed_chunk
+                        else:
+                            current_feed[name] = chunk
+                            if name == next(iter(input_feed)):
+                                for _ in range(target_b):
+                                    batch_resize_info.append((target_h, target_w, target_h, target_w))
                     
-                    return [np.concatenate(outs, axis=0) for outs in all_outputs]
+                    chunk_results = self.session(inputs=current_feed)
+                    actual_count = min(target_b, input_batch_size - i)
+                    
+                    for j, out_node in enumerate(self.session.outputs):
+                        res = chunk_results[out_node]
+                        
+                        # If output is a heatmap (4D), resize it back to original input size
+                        if len(res.shape) == 4 and res.shape[2:] == (target_h, target_w):
+                            restored_list = []
+                            for b in range(actual_count):
+                                oh, ow, nh, nw = batch_resize_info[b]
+                                heatmap = res[b, :, :nh, :nw].transpose(1, 2, 0) # (nh, nw, C)
+                                heatmap_restored = cv2.resize(heatmap, (ow, oh))
+                                if len(heatmap_restored.shape) == 2:
+                                    heatmap_restored = heatmap_restored[..., None]
+                                restored_list.append(heatmap_restored.transpose(2, 0, 1))
+                            all_outputs[j].append(np.array(restored_list))
+                        else:
+                            all_outputs[j].append(res[:actual_count])
+                
+                return [np.concatenate(outs, axis=0) for outs in all_outputs]
 
             result_dict = self.session(inputs=input_feed)
             return [result_dict[out] for out in self.session.outputs]

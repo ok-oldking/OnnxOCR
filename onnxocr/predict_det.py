@@ -6,7 +6,7 @@ from .predict_base import PredictBase
 
 class TextDetector(PredictBase):
     def __init__(self, args):
-        super().__init__(args.det_model_dir, args.use_openvino)
+        super().__init__(args.det_model_dir, args.use_openvino, getattr(args, "use_npu", False))
         self.args = args
         self.det_algorithm = args.det_algorithm
         pre_process_list = [
