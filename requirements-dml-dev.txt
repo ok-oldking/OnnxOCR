@@ -1,4 +1,0 @@
-opencv-python
-onnxruntime-directml
-shapely
-pyclipper

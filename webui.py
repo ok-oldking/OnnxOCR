@@ -22,7 +22,7 @@ app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
 
 ocr_logic = OCRLogic(lambda msg: print(msg))
 # 独立 OCR 模型实例，避免影响 ocr_logic
-ocr_model_api = ONNXPaddleOcr(use_angle_cls=True, use_gpu=False)
+ocr_model_api = ONNXPaddleOcr(use_angle_cls=True)
 
 @app.route("/")
 def index():

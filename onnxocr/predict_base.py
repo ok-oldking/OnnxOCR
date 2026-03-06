@@ -1,5 +1,5 @@
 class PredictBase(object):
-    def __init__(self, model_dir, use_gpu=False, use_dml=False, use_openvino=False):
+    def __init__(self, model_dir, use_openvino=False):
         self.is_openvino = use_openvino
         if self.is_openvino:
             import openvino as ov
@@ -46,12 +46,7 @@ class PredictBase(object):
                     print(f"[Warning] Failed to compile model on {device}: {e}. Trying {preferred_devices[preferred_devices.index(device)+1]}...")
         else:
             import onnxruntime
-            if use_gpu:
-                providers = [('CUDAExecutionProvider', {"cudnn_conv_algo_search": "DEFAULT"}), 'CPUExecutionProvider']
-            elif use_dml:
-                providers = ['DmlExecutionProvider', 'CPUExecutionProvider']
-            else:
-                providers = ['CPUExecutionProvider']
+            providers = ['CPUExecutionProvider']
 
             with open(model_dir, 'rb') as f:
                 self.session = onnxruntime.InferenceSession(f.read(), None, providers=providers)

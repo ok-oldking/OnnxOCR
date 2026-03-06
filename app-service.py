@@ -9,7 +9,7 @@ from onnxocr.onnx_paddleocr import ONNXPaddleOcr
 app = Flask(__name__)
 
 # 初始化 OCR 模型
-model = ONNXPaddleOcr(use_angle_cls=True, use_gpu=False)
+model = ONNXPaddleOcr(use_angle_cls=True)
 
 @app.route('/')
 def index():
