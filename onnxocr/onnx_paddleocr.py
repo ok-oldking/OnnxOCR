@@ -1,3 +1,4 @@
+import logging
 import time
 
 from .predict_system import TextSystem
@@ -8,7 +9,19 @@ import sys
 
 
 class ONNXPaddleOcr(TextSystem):
-    def __init__(self, **kwargs):
+    def __init__(self, logger=None, **kwargs):
+        # Init logger
+        if logger is None:
+            logger = logging.getLogger('onnxocr')
+            if not logger.handlers:
+                logger.setLevel(logging.INFO)
+                handler = logging.StreamHandler()
+                handler.setLevel(logging.INFO)
+                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                handler.setFormatter(formatter)
+                logger.addHandler(handler)
+        self.logger = logger
+
         # 默认参数
         parser = init_args()
         inference_args_dict = {}
@@ -21,6 +34,18 @@ class ONNXPaddleOcr(TextSystem):
 
         # 根据传入的参数覆盖更新默认参数
         params.__dict__.update(**kwargs)
+
+        # Pass logger through params for sub-components
+        params.logger = logger
+
+        logger.info(f'use_openvino: {params.use_openvino}')
+        logger.info(f'use_npu: {getattr(params, "use_npu", False)}')
+        logger.info(f'use_angle_cls: {params.use_angle_cls}')
+        logger.info(f'det_model_dir: {params.det_model_dir}')
+        logger.info(f'rec_model_dir: {params.rec_model_dir}')
+        logger.info(f'rec_image_shape: {params.rec_image_shape}')
+        if params.use_angle_cls:
+            logger.info(f'cls_model_dir: {params.cls_model_dir}')
 
         # 初始化模型
         super().__init__(params)

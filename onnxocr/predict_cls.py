@@ -9,7 +9,7 @@ from .predict_base import PredictBase
 
 class TextClassifier(PredictBase):
     def __init__(self, args):
-        super().__init__(args.cls_model_dir, args.use_openvino, getattr(args, "use_npu", False))
+        super().__init__(args.cls_model_dir, args.use_openvino, getattr(args, "use_npu", False), getattr(args, "logger", None))
         self.cls_image_shape = [int(v) for v in args.cls_image_shape.split(",")]
         self.cls_batch_num = args.cls_batch_num
         self.cls_thresh = args.cls_thresh

@@ -1,18 +1,31 @@
+import logging
 import numpy as np
 import cv2
 
 class PredictBase(object):
-    def __init__(self, model_dir, use_openvino=True, use_npu=True):
+    def __init__(self, model_dir, use_openvino=True, use_npu=True, logger=None):
         self.is_openvino = use_openvino
+        if logger is None:
+            logger = logging.getLogger('onnxocr')
+            if not logger.handlers:
+                logger.setLevel(logging.INFO)
+                handler = logging.StreamHandler()
+                handler.setLevel(logging.INFO)
+                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                handler.setFormatter(formatter)
+                logger.addHandler(handler)
+        self.logger = logger
         if self.is_openvino:
             import openvino as ov
             core = ov.Core()
             
             # Identify hardware
             devices = core.available_devices
+            logger.info(f'openvino core.available_devices {devices}')
             preferred_devices = []
             if use_npu and "NPU" in devices:
                 preferred_devices.append("NPU")
+                logger.info('openvino use npu')
             # if "GPU" in devices: preferred_devices.append("GPU") GPU too slow for dynamic shapes
             preferred_devices.append("CPU")
             
