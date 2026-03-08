@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 class PredictBase(object):
-    def __init__(self, model_dir, use_openvino=False, use_npu=False):
+    def __init__(self, model_dir, use_openvino=True, use_npu=True):
         self.is_openvino = use_openvino
         if self.is_openvino:
             import openvino as ov
