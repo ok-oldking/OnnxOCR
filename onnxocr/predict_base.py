@@ -45,7 +45,7 @@ class PredictBase(object):
                             if "det" in model_dir.lower():
                                 self.force_shape = (1, 3, 960, 960)
                             elif "rec" in model_dir.lower():
-                                self.force_shape = (1, 3, 48, 320)
+                                self.force_shape = (1, 3, 48, 960)
                             elif "cls" in model_dir.lower():
                                 self.force_shape = (1, 3, 48, 192)
 
@@ -63,6 +63,7 @@ class PredictBase(object):
                             pass
                     
                     self.session = core.compile_model(model=model, device_name=device)
+                    self.model_dir = model_dir # Store for identifying model type in run()
                     if device == "NPU":
                         self.is_npu = True
                     break
@@ -120,9 +121,18 @@ class PredictBase(object):
                                     else:
                                         img_resized = cv2.resize(img, (nw, nh))
                                     
-                                    # Use BORDER_REPLICATE to avoid sharp edges at the bottom/right padding
-                                    # this is much better for DB detectors than zero padding
-                                    img_padded = cv2.copyMakeBorder(img_resized, 0, target_h - nh, 0, target_w - nw, cv2.BORDER_REPLICATE)
+                                    # Identify model type for appropriate padding
+                                    model_dir_lower = getattr(self, "model_dir", "").lower()
+                                    is_rec_or_cls = "rec" in model_dir_lower or "cls" in model_dir_lower
+                                    
+                                    if is_rec_or_cls:
+                                        # For recognition/classification, constant padding is better to avoid smearing text
+                                        # value=0 matches the padding used in predict_rec.py
+                                        img_padded = cv2.copyMakeBorder(img_resized, 0, target_h - nh, 0, target_w - nw, cv2.BORDER_CONSTANT, value=0)
+                                    else:
+                                        # Use BORDER_REPLICATE for detection to avoid sharp edges at the bottom/right padding
+                                        img_padded = cv2.copyMakeBorder(img_resized, 0, target_h - nh, 0, target_w - nw, cv2.BORDER_REPLICATE)
+                                        
                                     processed_chunk[b] = img_padded.transpose(2, 0, 1)
                                 
                                 if name == next(iter(input_feed)):
@@ -140,14 +150,36 @@ class PredictBase(object):
                     for j, out_node in enumerate(self.session.outputs):
                         res = chunk_results[out_node]
                         
+                        # Robust layout check: OpenVINO sometimes returns NHWC on certain hardware/drivers
+                        # but our post-processing expects NCHW.
+                        if len(res.shape) == 4 and res.shape[1] > res.shape[3] and (res.shape[3] == 1 or res.shape[3] == 3):
+                            # Likely NHWC (N, H, W, C), transpose to NCHW (N, C, H, W)
+                            res = res.transpose(0, 3, 1, 2)
+                        
+                        # Recognition models expect 3D output (N, L, C)
+                        # If OpenVINO returns 4D (N, L, 1, C) or (N, 1, L, C), squeeze it
+                        if "rec" in getattr(self, "model_dir", "").lower() and len(res.shape) == 4:
+                            # Squeeze any dimension of size 1
+                            if res.shape[1] == 1:
+                                res = np.squeeze(res, axis=1)
+                            elif res.shape[2] == 1:
+                                res = np.squeeze(res, axis=2)
+
                         # If output is a heatmap (4D), resize it back to original input size
-                        if len(res.shape) == 4 and res.shape[2:] == (target_h, target_w):
+                        if len(res.shape) == 4:
+                            # Handle potential stride (e.g. output is H/stride, W/stride)
+                            out_h, out_w = res.shape[2:]
+                            ratio_h = out_h / target_h
+                            ratio_w = out_w / target_w
+                            
                             restored_list = []
                             for b in range(actual_count):
                                 oh, ow, nh, nw = batch_resize_info[b]
+                                s_nh, s_nw = int(nh * ratio_h), int(nw * ratio_w)
+                                
                                 # Extract only the relevant part of the heatmap
-                                heatmap = res[b, :, :nh, :nw].transpose(1, 2, 0) # (nh, nw, C)
-                                if nw == ow and nh == oh:
+                                heatmap = res[b, :, :s_nh, :s_nw].transpose(1, 2, 0) # (s_nh, s_nw, C)
+                                if (s_nh == oh and s_nw == ow):
                                     heatmap_restored = heatmap
                                 else:
                                     heatmap_restored = cv2.resize(heatmap, (ow, oh))
@@ -161,7 +193,26 @@ class PredictBase(object):
                 return [np.concatenate(outs, axis=0) for outs in all_outputs]
 
             result_dict = self.session(inputs=input_feed)
-            return [result_dict[out] for out in self.session.outputs]
+            outputs = [result_dict[out] for out in self.session.outputs]
+            
+            # Robust layout check: OpenVINO sometimes returns NHWC on certain hardware/drivers
+            # but our post-processing expects NCHW.
+            processed_outputs = []
+            for res in outputs:
+                if len(res.shape) == 4 and res.shape[1] > res.shape[3] and (res.shape[3] == 1 or res.shape[3] == 3):
+                    # Likely NHWC (N, H, W, C), transpose to NCHW (N, C, H, W)
+                    processed_outputs.append(res.transpose(0, 3, 1, 2))
+                elif "rec" in getattr(self, "model_dir", "").lower() and len(res.shape) == 4:
+                    # Squeeze recognition output if it's 4D
+                    if res.shape[1] == 1:
+                        processed_outputs.append(np.squeeze(res, axis=1))
+                    elif res.shape[2] == 1:
+                        processed_outputs.append(np.squeeze(res, axis=2))
+                    else:
+                        processed_outputs.append(res)
+                else:
+                    processed_outputs.append(res)
+            return processed_outputs
         else:
             return self.session.run(output_name, input_feed)
 

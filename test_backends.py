@@ -82,12 +82,20 @@ def main():
             for backend, texts in results.items():
                 if backend == "ONNX" or "BOX_COUNT" in backend: continue
                 
+                # Calculate how many texts are identical (using a multiset-like approach)
+                common_count = 0
+                temp_base = base_texts.copy()
+                for t in texts:
+                    if t in temp_base:
+                        common_count += 1
+                        temp_base.remove(t)
+                
                 if len(texts) != base_len:
-                    mismatches.append(f"{backend} count ({len(texts)}) != ONNX count ({base_len})")
+                    mismatches.append(f"{backend} count ({len(texts)}) != ONNX count ({base_len}), equal count ({common_count})")
                 else:
                     diff = [t for t in texts if t not in base_texts]
                     if diff:
-                        mismatches.append(f"{backend} has different bounding box texts parsed vs ONNX")
+                        mismatches.append(f"{backend} has different bounding box texts parsed vs ONNX, equal count ({common_count})")
             
             if not mismatches:
                 print(f"OK (Extracted {base_len} texts)")
