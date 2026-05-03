@@ -24,8 +24,12 @@ class PredictBase(object):
             logger.info(f'openvino core.available_devices {devices}')
             preferred_devices = []
             if use_npu and "NPU" in devices:
-                preferred_devices.append("NPU")
-                logger.info('openvino use npu')
+                from .check_npu import check_npu_driver_valid
+                npu_driver_valid = check_npu_driver_valid(logger)
+                
+                if npu_driver_valid:
+                    preferred_devices.append("NPU")
+                    logger.info('openvino use npu')
             # if "GPU" in devices: preferred_devices.append("GPU") GPU too slow for dynamic shapes
             preferred_devices.append("CPU")
             
