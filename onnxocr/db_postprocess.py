@@ -221,7 +221,8 @@ class DBPostProcess(object):
         pred = outs_dict['maps']
         # if isinstance(pred, paddle.Tensor):
         #     pred = pred.numpy()
-        pred = pred[:, 0, :, :]
+        if len(pred.shape) == 4:
+            pred = pred[:, 0, :, :]
         segmentation = pred > self.thresh
 
         boxes_batch = []
