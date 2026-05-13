@@ -8,7 +8,7 @@ def check_npu_driver_valid(logger):
     try:
         def parse_version(v):
             return tuple(map(int, re.findall(r'\d+', v)))
-
+        
         if sys_plat == "Windows":
             # Intel NPU only: exact PnP DeviceName + Intel OEM (avoids other devices matching \bNPU\b).
             ps = (
