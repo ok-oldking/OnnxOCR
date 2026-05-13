@@ -254,6 +254,7 @@ def infer_args():
     # params for prediction engine
     parser.add_argument("--use_xpu", type=str2bool, default=False)
     parser.add_argument("--use_npu", type=str2bool, default=False)
+    parser.add_argument("--use_openvino", type=str2bool, default=False)
     parser.add_argument("--ir_optim", type=str2bool, default=True)
     parser.add_argument("--use_tensorrt", type=str2bool, default=False)
     parser.add_argument("--min_subgraph_size", type=int, default=15)
