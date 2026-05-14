@@ -10,11 +10,12 @@ def check_npu_driver_valid(logger):
             return tuple(map(int, re.findall(r'\d+', v)))
         
         if sys_plat == "Windows":
-            # Intel NPU only: exact PnP DeviceName + Intel OEM (avoids other devices matching \bNPU\b).
+            # Intel NPU only: require Intel OEM, but allow the different NPU
+            # device names Windows exposes across driver/platform versions.
             ps = (
-                "$n=@('Intel(R) AI Boost','Intel(R) NPU Accelerator','Intel\u00ae AI Boost'); "
                 "Get-WmiObject Win32_PnPSignedDriver | Where-Object { "
-                "$_.Manufacturer -imatch 'Intel' -and $_.DeviceName -and ($n -contains $_.DeviceName.Trim()) "
+                "$_.Manufacturer -imatch 'Intel' -and $_.DeviceName -and "
+                "$_.DeviceName -imatch '(\\bNPU\\b|AI Boost)' "
                 "} | Select-Object -First 1 -ExpandProperty DriverVersion"
             )
             cmd = ['powershell', '-NoProfile', '-Command', ps]
