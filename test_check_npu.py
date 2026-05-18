@@ -1,3 +1,4 @@
+import os
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -21,7 +22,8 @@ class CheckNpuDriverValidTests(unittest.TestCase):
         logger = _Logger()
 
         def fake_run(cmd, **kwargs):
-            self.assertEqual(cmd[:3], ["powershell", "-NoProfile", "-Command"])
+            self.assertEqual(os.path.basename(cmd[0]).lower(), "powershell.exe")
+            self.assertEqual(cmd[1:3], ["-NoProfile", "-Command"])
             self.assertIn("Manufacturer -imatch 'Intel'", cmd[3])
             self.assertIn("DeviceName -imatch", cmd[3])
             return SimpleNamespace(stdout=stdout)

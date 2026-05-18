@@ -1,3 +1,4 @@
+import os
 import platform
 import subprocess
 import re
@@ -18,7 +19,11 @@ def check_npu_driver_valid(logger):
                 "$_.DeviceName -imatch '(\\bNPU\\b|AI Boost)' "
                 "} | Select-Object -First 1 -ExpandProperty DriverVersion"
             )
-            cmd = ['powershell', '-NoProfile', '-Command', ps]
+            system_root = os.environ.get("SystemRoot") or os.environ.get("WINDIR") or r"C:\Windows"
+            powershell = os.path.join(
+                system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe"
+            )
+            cmd = [powershell, '-NoProfile', '-Command', ps]
             creationflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0x08000000)
             result = subprocess.run(cmd, capture_output=True, text=True, creationflags=creationflags)
             output = result.stdout.strip()
