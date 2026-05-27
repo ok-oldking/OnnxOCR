@@ -69,6 +69,14 @@ exclude = ["tests*"]   # exclude 'tests' from being installed as a top-level pac
     "models/ppocrv5/rec/rec.onnx"
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers -m 'not integration'"
+markers = [
+    "integration: run model inference using installed OCR backends",
+    "npu: run inference through the OpenVINO NPU selection path",
+]
+
 # If you had a CLI script:
 # [project.scripts]
 # onnxocr-cli = "onnxocr.cli:main_cli_function"

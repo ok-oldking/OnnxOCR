@@ -12,3 +12,15 @@ pip install onnxocr-ppocrv5
 ```python
 model = ONNXPaddleOcr(use_angle_cls=False)
 ```
+
+### 测试
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+pytest -m "integration and not npu"
+pytest -m "integration and npu"
+```
+
+默认的 `pytest` 命令只运行快速单元测试。集成测试会加载 OCR 模型和推理后端，
+其中 `npu` 标记用于显式验证 OpenVINO NPU 路径。
