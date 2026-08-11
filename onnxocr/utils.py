@@ -255,6 +255,7 @@ def infer_args():
     parser.add_argument("--use_xpu", type=str2bool, default=False)
     parser.add_argument("--use_npu", type=str2bool, default=False)
     parser.add_argument("--use_openvino", type=str2bool, default=False)
+    parser.add_argument("--openvino_num_requests", type=int, default=1)
     parser.add_argument("--ir_optim", type=str2bool, default=True)
     parser.add_argument("--use_tensorrt", type=str2bool, default=False)
     parser.add_argument("--min_subgraph_size", type=int, default=15)

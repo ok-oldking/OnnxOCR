@@ -10,7 +10,14 @@ from .predict_base import PredictBase
 
 class TextRecognizer(PredictBase):
     def __init__(self, args):
-        super().__init__(args.rec_model_dir, args.use_openvino, getattr(args, "use_npu", False), getattr(args, "logger", None), getattr(args, "force_static_shape", False))
+        super().__init__(
+            args.rec_model_dir,
+            args.use_openvino,
+            getattr(args, "use_npu", False),
+            getattr(args, "logger", None),
+            getattr(args, "force_static_shape", False),
+            getattr(args, "openvino_num_requests", 1),
+        )
         self.rec_image_shape = [int(v) for v in args.rec_image_shape.split(",")]
         self.rec_batch_num = args.rec_batch_num
         self.rec_algorithm = args.rec_algorithm

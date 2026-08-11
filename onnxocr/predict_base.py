@@ -1,9 +1,39 @@
 import logging
+import hashlib
+import threading
+from pathlib import Path
+
 import numpy as np
 import cv2
 
+
+def _model_cache_path(model_dir, backend, suffix):
+    """Return a collision-safe cache path rooted in the working directory."""
+    model_path = Path(model_dir).resolve()
+    path_hash = hashlib.sha256(str(model_path).encode("utf-8")).hexdigest()[:12]
+    cache_dir = Path.cwd() / "cache" / backend
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir / f"{model_path.parent.name}-{model_path.stem}-{path_hash}{suffix}"
+
+
+def _cache_is_current(model_path, cache_path):
+    """A changed source model must not reuse an older optimized model."""
+    return (
+        cache_path.is_file()
+        and cache_path.stat().st_mtime_ns >= model_path.stat().st_mtime_ns
+    )
+
+
 class PredictBase(object):
-    def __init__(self, model_dir, use_openvino=True, use_npu=True, logger=None, force_static_shape=False):
+    def __init__(
+        self,
+        model_dir,
+        use_openvino=True,
+        use_npu=True,
+        logger=None,
+        force_static_shape=False,
+        openvino_num_requests=1,
+    ):
         self.is_openvino = use_openvino
         if logger is None:
             logger = logging.getLogger('onnxocr')
@@ -18,20 +48,36 @@ class PredictBase(object):
         if self.is_openvino:
             import openvino as ov
             core = ov.Core()
+            cache_dir = Path.cwd() / "cache" / "openvino"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            core.set_property({"CACHE_DIR": str(cache_dir)})
+            logger.info(f'openvino cache_dir: {cache_dir}')
             
-            # Identify hardware
-            devices = core.available_devices
-            logger.info(f'openvino core.available_devices {devices}')
+            # Do not call core.available_devices here.  That API enumerates all
+            # registered plugins and can initialize the GPU plugin even though
+            # OCR is compiled for CPU/NPU only.  Probe NPU directly when it was
+            # explicitly requested, then fall back to CPU.
             preferred_devices = []
-            if use_npu and "NPU" in devices:
-                from .check_npu import check_npu_driver_valid
-                npu_driver_valid = check_npu_driver_valid(logger)
-                
-                if npu_driver_valid:
-                    preferred_devices.append("NPU")
-                    logger.info('openvino use npu')
-            # if "GPU" in devices: preferred_devices.append("GPU") GPU too slow for dynamic shapes
+            if use_npu:
+                try:
+                    npu_devices = core.get_property("NPU", "AVAILABLE_DEVICES")
+                except Exception as exc:
+                    npu_devices = []
+                    logger.info(f'openvino npu unavailable: {exc}')
+
+                if npu_devices:
+                    from .check_npu import check_npu_driver_valid
+                    npu_driver_valid = check_npu_driver_valid(logger)
+
+                    if npu_driver_valid:
+                        preferred_devices.append("NPU")
+                        logger.info('openvino use npu')
+
             preferred_devices.append("CPU")
+            logger.info(
+                f'openvino device candidates {preferred_devices}; '
+                'gpu discovery disabled'
+            )
             
             self.session = None
             self.is_npu = False
@@ -75,12 +121,90 @@ class PredictBase(object):
                     self.force_shape = None
                     if device == preferred_devices[-1]: raise e
                     self.logger.warning(f"Failed to compile model on {device}: {e}. Trying next...")
+
+            # CompiledModel.__call__ reuses a synchronous InferRequest.  Use an
+            # AsyncInferQueue instead so the same OCR model can safely serve
+            # concurrent callers with separate requests.
+            self._async_queue = ov.AsyncInferQueue(
+                self.session, jobs=openvino_num_requests
+            )
+            self._async_submit_lock = threading.Lock()
+            self._async_queue.set_callback(self._on_openvino_complete)
+            logger.info(
+                f'openvino async infer requests: {len(self._async_queue)}'
+            )
         else:
             import onnxruntime
             providers = ['CPUExecutionProvider']
+            model_path = Path(model_dir).resolve()
+            cache_path = _model_cache_path(
+                model_path, "onnxruntime", ".optimized.onnx"
+            )
 
-            with open(model_dir, 'rb') as f:
-                self.session = onnxruntime.InferenceSession(f.read(), None, providers=providers)
+            if _cache_is_current(model_path, cache_path):
+                try:
+                    self.session = onnxruntime.InferenceSession(
+                        str(cache_path), providers=providers
+                    )
+                    logger.info(f'onnxruntime loaded cached model: {cache_path}')
+                except Exception as exc:
+                    logger.warning(
+                        f'Failed to load cached ONNX model {cache_path}: {exc}. '
+                        'Rebuilding cache.'
+                    )
+                    cache_path.unlink(missing_ok=True)
+                    self.session = self._create_onnxruntime_session(
+                        onnxruntime, model_path, cache_path, providers
+                    )
+            else:
+                self.session = self._create_onnxruntime_session(
+                    onnxruntime, model_path, cache_path, providers
+                )
+
+    def _create_onnxruntime_session(
+        self, onnxruntime, model_path, cache_path, providers
+    ):
+        session_options = onnxruntime.SessionOptions()
+        session_options.graph_optimization_level = (
+            onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
+        )
+        session_options.optimized_model_filepath = str(cache_path)
+        session = onnxruntime.InferenceSession(
+            str(model_path), sess_options=session_options, providers=providers
+        )
+        self.logger.info(f'onnxruntime cached optimized model: {cache_path}')
+        return session
+
+    @staticmethod
+    def _on_openvino_complete(infer_request, job):
+        try:
+            # InferRequests are reused as soon as the callback returns, so each
+            # caller must own a copy of its outputs.
+            job["outputs"] = [
+                np.array(tensor.data, copy=True)
+                for tensor in infer_request.output_tensors
+            ]
+        except BaseException as exc:
+            job["error"] = exc
+        finally:
+            job["done"].set()
+
+    def _run_openvino_async(self, input_feed):
+        job = {"done": threading.Event(), "outputs": None, "error": None}
+
+        # AsyncInferQueue handles request reuse. Serialize only submission so
+        # concurrent Python callers cannot race its flow-control operation.
+        with self._async_submit_lock:
+            self._async_queue.start_async(
+                input_feed, userdata=job, share_inputs=False
+            )
+
+        job["done"].wait()
+        if job["error"] is not None:
+            raise RuntimeError(
+                "OpenVINO asynchronous inference failed"
+            ) from job["error"]
+        return job["outputs"]
 
     def run(self, output_name, input_feed):
         if self.is_openvino:
@@ -148,11 +272,10 @@ class PredictBase(object):
                                 for _ in range(target_b):
                                     batch_resize_info.append((target_h, target_w, target_h, target_w))
                     
-                    chunk_results = self.session(inputs=current_feed)
+                    chunk_results = self._run_openvino_async(current_feed)
                     actual_count = min(target_b, input_batch_size - i)
                     
-                    for j, out_node in enumerate(self.session.outputs):
-                        res = chunk_results[out_node]
+                    for j, res in enumerate(chunk_results):
                         
                         # Robust layout check: OpenVINO sometimes returns NHWC on certain hardware/drivers
                         # but our post-processing expects NCHW.
@@ -196,8 +319,7 @@ class PredictBase(object):
                 
                 return [np.concatenate(outs, axis=0) for outs in all_outputs]
 
-            result_dict = self.session(inputs=input_feed)
-            outputs = [result_dict[out] for out in self.session.outputs]
+            outputs = self._run_openvino_async(input_feed)
             
             # Robust layout check: OpenVINO sometimes returns NHWC on certain hardware/drivers
             # but our post-processing expects NCHW.
