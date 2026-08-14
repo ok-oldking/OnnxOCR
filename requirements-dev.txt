@@ -1,5 +1,2 @@
-build
-twine
-setuptools
-pytest>=7.0
+-e .[dev]
 

@@ -9,7 +9,7 @@ authors = [
     { name = "Your Name", email = "your.email@example.com" },
 ]
 description = "ONNX-based OCR (PP-OCRv5) inference pipeline."
-readme = "README.md"
+readme = "Readme.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE" }
 keywords = ["ocr", "onnx", "ppocr", "text detection", "text recognition"]
@@ -31,7 +31,28 @@ classifiers = [
 dependencies = [
     "pyclipper",
     "shapely",
-    "pillow"
+    "pillow",
+]
+
+[project.optional-dependencies]
+# Install exactly one inference backend for normal use. Installing both is
+# useful when comparing their output or running the complete integration suite.
+onnx = [
+    "onnxruntime",
+]
+openvino = [
+    "openvino",
+]
+dev = [
+    "numpy",
+    "opencv-python-headless",
+    "onnxruntime",
+    "openvino",
+    "pytest>=7.0",
+]
+build = [
+    "build",
+    "twine",
 ]
 
 [project.urls]
