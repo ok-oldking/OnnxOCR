@@ -48,6 +48,7 @@ class PredictBase(object):
         if self.is_openvino:
             import openvino as ov
             core = ov.Core()
+            self.core = core
             cache_dir = Path.cwd() / "cache" / "openvino"
             cache_dir.mkdir(parents=True, exist_ok=True)
             core.set_property({"CACHE_DIR": str(cache_dir)})
