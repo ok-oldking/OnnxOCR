@@ -159,9 +159,12 @@ ocr = ONNXPaddleOcr(
 )
 ```
 
-The pipeline validates the NPU driver and tries the NPU first. If a usable NPU
-is not available, it falls back to OpenVINO CPU. Enabling angle classification
-loads the bundled classification model in addition to detection and recognition.
+The pipeline validates the NPU driver, initializes the NPU models, and runs an
+OCR smoke test against an OpenCV-generated `okscript` image. If NPU setup or
+the first inference fails, it reinitializes the complete pipeline with
+`use_npu=False`. The initialization completion log records the smoke-test or
+fallback result. Enabling angle classification loads the bundled classification
+model in addition to detection and recognition.
 
 ### Install both backends
 

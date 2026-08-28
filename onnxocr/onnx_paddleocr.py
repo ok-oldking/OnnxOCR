@@ -47,8 +47,49 @@ class ONNXPaddleOcr(TextSystem):
         if params.use_angle_cls:
             logger.info(f'cls_model_dir: {params.cls_model_dir}')
 
-        # 初始化模型
+        start = time.time()
+        if getattr(params, "use_npu", False):
+            test_frame = self._npu_test_frame()
+            try:
+                self._initialize_models(params)
+                test_result = self.ocr(test_frame)
+                init_result = f'use_npu=True, test_ocr={test_result!r}'
+            except Exception as error:
+                logger.warning(
+                    f'NPU OCR test failed, falling back to CPU: {error}'
+                )
+                params.use_npu = False
+                self._initialize_models(params)
+                init_result = f'use_npu=False (NPU test failed: {error!r})'
+        else:
+            self._initialize_models(params)
+            init_result = 'use_npu=False'
+
+        logger.info(
+            f'onnxocr init finished, result: {init_result}, '
+            f'cost: {time.time() - start:.2f}s'
+        )
+
+    def _initialize_models(self, params):
         super().__init__(params)
+
+    @staticmethod
+    def _npu_test_frame():
+        import cv2
+        import numpy as np
+
+        frame = np.full((160, 640, 3), 255, dtype=np.uint8)
+        cv2.putText(
+            frame,
+            'okscript',
+            (24, 110),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            2.5,
+            (0, 0, 0),
+            5,
+            cv2.LINE_AA,
+        )
+        return frame
 
     def ocr(self, img, det=True, rec=True, cls=True):
         # if cls == True and self.use_angle_cls == False:

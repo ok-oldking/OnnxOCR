@@ -146,9 +146,11 @@ ocr = ONNXPaddleOcr(
 )
 ```
 
-程序会检查 NPU 驱动并优先尝试 NPU。如果没有可用的 NPU，会回退到 OpenVINO
-CPU。启用 `use_angle_cls=True` 后，除检测和识别模型之外，还会加载内置的方向
-分类模型。
+程序会检查 NPU 驱动、初始化 NPU 模型，并对一张由 OpenCV 生成且包含
+`okscript` 的图像执行 OCR 冒烟测试。如果 NPU 初始化或首次推理失败，会使用
+`use_npu=False` 重新初始化完整流水线。初始化完成日志会记录冒烟测试或回退
+结果。启用 `use_angle_cls=True` 后，除检测和识别模型之外，还会加载内置的
+方向分类模型。
 
 ### 同时安装两个后端
 
