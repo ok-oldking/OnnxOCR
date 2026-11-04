@@ -41,13 +41,13 @@ onnx = [
     "onnxruntime",
 ]
 openvino = [
-    "openvino",
+    "openvino>=2026.4.1",
 ]
 dev = [
     "numpy",
     "opencv-python-headless",
     "onnxruntime",
-    "openvino",
+    "openvino>=2026.4.1",
     "pytest>=7.0",
 ]
 build = [
