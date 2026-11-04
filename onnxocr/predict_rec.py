@@ -5,7 +5,7 @@ from PIL import Image
 
 
 from .rec_postprocess import CTCLabelDecode
-from .predict_base import PredictBase
+from .predict_base import PredictBase, DEFAULT_OPENVINO_CPU_CACHE_CAPACITY
 
 
 class TextRecognizer(PredictBase):
@@ -17,6 +17,7 @@ class TextRecognizer(PredictBase):
             getattr(args, "logger", None),
             getattr(args, "force_static_shape", False),
             getattr(args, "openvino_num_requests", 1),
+            getattr(args, "openvino_cpu_cache_capacity", DEFAULT_OPENVINO_CPU_CACHE_CAPACITY),
         )
         self.rec_image_shape = [int(v) for v in args.rec_image_shape.split(",")]
         self.rec_batch_num = args.rec_batch_num

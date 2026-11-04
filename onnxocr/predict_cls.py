@@ -4,7 +4,7 @@ import numpy as np
 import math
 
 from .cls_postprocess import ClsPostProcess
-from .predict_base import PredictBase
+from .predict_base import PredictBase, DEFAULT_OPENVINO_CPU_CACHE_CAPACITY
 
 
 class TextClassifier(PredictBase):
@@ -16,6 +16,7 @@ class TextClassifier(PredictBase):
             getattr(args, "logger", None),
             getattr(args, "force_static_shape", False),
             getattr(args, "openvino_num_requests", 1),
+            getattr(args, "openvino_cpu_cache_capacity", DEFAULT_OPENVINO_CPU_CACHE_CAPACITY),
         )
         self.cls_image_shape = [int(v) for v in args.cls_image_shape.split(",")]
         self.cls_batch_num = args.cls_batch_num

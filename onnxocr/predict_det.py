@@ -1,7 +1,7 @@
 import numpy as np
 from .imaug import transform, create_operators
 from .db_postprocess import DBPostProcess
-from .predict_base import PredictBase
+from .predict_base import PredictBase, DEFAULT_OPENVINO_CPU_CACHE_CAPACITY
 
 
 class TextDetector(PredictBase):
@@ -13,6 +13,7 @@ class TextDetector(PredictBase):
             getattr(args, "logger", None),
             getattr(args, "force_static_shape", False),
             getattr(args, "openvino_num_requests", 1),
+            getattr(args, "openvino_cpu_cache_capacity", DEFAULT_OPENVINO_CPU_CACHE_CAPACITY),
         )
         self.args = args
         self.det_algorithm = args.det_algorithm

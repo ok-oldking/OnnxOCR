@@ -24,6 +24,13 @@ def _cache_is_current(model_path, cache_path):
     )
 
 
+# The OpenVINO CPU plugin compiles and caches executors for every distinct
+# input shape of a dynamic model.  Its default capacity (5000 shapes) lets a
+# long-running OCR process grow by many GB because detection crops and text
+# line widths produce an almost unbounded set of shapes.  Keep it small.
+DEFAULT_OPENVINO_CPU_CACHE_CAPACITY = 16
+
+
 class PredictBase(object):
     def __init__(
         self,
@@ -33,6 +40,7 @@ class PredictBase(object):
         logger=None,
         force_static_shape=False,
         openvino_num_requests=1,
+        openvino_cpu_cache_capacity=DEFAULT_OPENVINO_CPU_CACHE_CAPACITY,
     ):
         self.is_openvino = use_openvino
         if logger is None:
@@ -112,7 +120,14 @@ class PredictBase(object):
                         except Exception:
                             pass
                     
-                    self.session = core.compile_model(model=model, device_name=device)
+                    compile_config = {}
+                    if device == "CPU":
+                        compile_config["CPU_RUNTIME_CACHE_CAPACITY"] = str(
+                            int(openvino_cpu_cache_capacity)
+                        )
+                    self.session = core.compile_model(
+                        model=model, device_name=device, config=compile_config
+                    )
                     self.model_dir = model_dir # Store for identifying model type in run()
                     if device == "NPU":
                         self.is_npu = True
