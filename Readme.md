@@ -11,6 +11,65 @@ conversion are outside the scope of this package.
 
 For Chinese documentation, see [Readme_cn.md](Readme_cn.md).
 
+A separate **`onnxocr-ppocrv6`** distribution bundles PP-OCRv6 small as its
+default detector and recognizer. See [v6 installation and release instructions](Readme_v6.md).
+V6 releases use the independent `ppocrv6-v*` tag workflow.
+
+Direct imports from this checkout, including local imports from ok-script,
+default to **PP-OCRv6 small**. Download the small models once before using a
+fresh checkout. The `onnxocr-ppocrv5` distribution selects v5 defaults at build
+time to match the models bundled in that package.
+
+## Try PP-OCRv6 and compare with v5
+
+Download the default small models for local source imports:
+
+```bash
+python -m pip install pyyaml
+python scripts/download_ppocrv6.py --tiers small
+```
+
+To compare every size, download all three model pairs and run the benchmark:
+
+```bash
+python scripts/download_ppocrv6.py
+python scripts/compare_ppocr.py
+```
+
+The downloader pins official PaddlePaddle Hugging Face revisions, verifies
+model SHA-256 hashes, and extracts each model's own character dictionary.
+Downloaded models live under `onnxocr/models/ppocrv6/` and are excluded from
+Git and the v5 wheel. Use `--tiers small` to download only the small pair.
+PyYAML is needed only for downloading; inference uses the existing dependencies.
+
+The comparison runs both CPU backends, a complete warmup sweep, and three
+timed passes over the 30 top-level sample images. It also tests recognition
+on 60 labeled synthetic English, Chinese, Japanese, French, and German crops.
+Synthetic generation requires Windows Arial and MS Gothic fonts, plus the
+bundled Chinese font. Use `--backends openvino` to test one backend. Results,
+settings, hashes, and all predictions are saved under `reports/ppocrv6/`.
+See [the local comparison](reports/ppocrv6/comparison.md) for findings and limits.
+
+To use a downloaded pair, pass all three paths explicitly, for example:
+
+```python
+from pathlib import Path
+from onnxocr.onnx_paddleocr import ONNXPaddleOcr
+
+models = Path("onnxocr/models/ppocrv6/small").resolve()
+ocr = ONNXPaddleOcr(
+    use_openvino=True,
+    use_npu=False,
+    det_model_dir=str(models / "det/det.onnx"),
+    rec_model_dir=str(models / "rec/rec.onnx"),
+    rec_char_dict_path=str(models / "ppocrv6_dict.txt"),
+)
+```
+
+V6 tiny uses a different dictionary from small/medium; always keep the model
+and dictionary together. The shared pipeline retains this project's detection
+thresholds and resizing settings, which differ from the official v6 defaults.
+
 ## Features
 
 - **Two inference backends:** run the same PP-OCRv5 pipeline with either ONNX
@@ -56,7 +115,7 @@ The package defines independent optional dependency profiles in
 | `onnx` | `onnxruntime` | ONNX Runtime inference |
 | `openvino` | `openvino` | OpenVINO CPU or Intel NPU inference |
 | `dev` | NumPy, OpenCV headless, `onnxruntime`, `openvino`, `pytest` | Complete development and test environment for both backends |
-| `build` | `build`, `twine` | Building and validating release artifacts |
+| `build` | `build`, `twine`, `tomli-w`, PyYAML | Building and validating v5/v6 release artifacts |
 
 The `dev` profile already includes both inference backends and all Python
 packages required by the test suite. Add `build` when the same environment also

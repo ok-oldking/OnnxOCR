@@ -1,0 +1,288 @@
+{
+  "created_utc": "2026-11-14T12:32:00.215506+00:00",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "processor": "Intel64 Family 6 Model 204 Stepping 2, GenuineIntel",
+  "python": "3.12.15",
+  "versions": {
+    "numpy": "1.26.4",
+    "Pillow": "12.2.0",
+    "onnxruntime": "1.24.4",
+    "openvino": "2026.4.1"
+  },
+  "opencv": "4.7.0",
+  "images": [
+    {
+      "path": "00006737.jpg",
+      "shape": [
+        528,
+        896,
+        3
+      ],
+      "sha256": "4425af33dd163cf73bdff502bd35ee527e9bdd5725501db1da78bfdae9f538f4"
+    },
+    {
+      "path": "00009282.jpg",
+      "shape": [
+        350,
+        350,
+        3
+      ],
+      "sha256": "957a9cc15da49312277796126be225e0ee653f3316578c12d626fa43fbe9561b"
+    },
+    {
+      "path": "00015504.jpg",
+      "shape": [
+        519,
+        559,
+        3
+      ],
+      "sha256": "74f8433958845bed4b2f1819a14488d31ccd57c6caca0307585c3cb89ddc7ff1"
+    },
+    {
+      "path": "00018069.jpg",
+      "shape": [
+        267,
+        430,
+        3
+      ],
+      "sha256": "769bce39ef8baccd4db0cd36cdf80952dca7a6fa041aac4763938ebf1b875b8b"
+    },
+    {
+      "path": "00056221.jpg",
+      "shape": [
+        510,
+        670,
+        3
+      ],
+      "sha256": "f76ac52816fa74fa9efac12ab4c382cbed3c137d02b689738edbcb63717abe9e"
+    },
+    {
+      "path": "00057937.jpg",
+      "shape": [
+        750,
+        1000,
+        3
+      ],
+      "sha256": "640dd04a43a761812fab58ef5ad1ef1694a8bc843e576b3c28bee0110a3d0c4d"
+    },
+    {
+      "path": "00059985.jpg",
+      "shape": [
+        528,
+        574,
+        3
+      ],
+      "sha256": "1294755b7db3d7c22daa31ed1995d1509aa385d5a54831774532716b4b26c330"
+    },
+    {
+      "path": "00111002.jpg",
+      "shape": [
+        667,
+        500,
+        3
+      ],
+      "sha256": "25d7fb496543765eab9adca7edebdab74f0a78068dae8312cbe4f8b508af9e0f"
+    },
+    {
+      "path": "00207393.jpg",
+      "shape": [
+        375,
+        489,
+        3
+      ],
+      "sha256": "e3766e72d161d38bf3893fcff94dbcde348dadf03a8f88f7ebf637d5a6f5831c"
+    },
+    {
+      "path": "1.jpg",
+      "shape": [
+        1150,
+        720,
+        3
+      ],
+      "sha256": "1b3978f3708bc31e3acfe603b052531a480db87ebaa1460559ee7d3eb1160593"
+    },
+    {
+      "path": "11.jpg",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "sha256": "2bb78629be3a6b29025d85db3677642c267d0ff176706ab963e8cb0c132df10b"
+    },
+    {
+      "path": "12.jpg",
+      "shape": [
+        1150,
+        720,
+        3
+      ],
+      "sha256": "3ac37804e4e292f68c8960d553485147516cdc2e4154afeec6ca742a70e71dca"
+    },
+    {
+      "path": "32e0869f54edcf90cc8e93b981f7235.jpg",
+      "shape": [
+        1466,
+        1074,
+        3
+      ],
+      "sha256": "288ac13f2251f88e0fa6db645b1c56e7ed84725775b9a4e628e07eddc77bd5e3"
+    },
+    {
+      "path": "715873facf064583b44ef28295126fa7.jpg",
+      "shape": [
+        2560,
+        1920,
+        3
+      ],
+      "sha256": "018eb0385c13d6ca85b43cb5f75f09ccad7d693df31baeab94040351f3fd9a70"
+    },
+    {
+      "path": "echo.png",
+      "shape": [
+        1440,
+        2560,
+        3
+      ],
+      "sha256": "78056268eadf1884b4fffa9f0ec31b2b1a9a3a29a4102712ff75fafb0399d7eb"
+    },
+    {
+      "path": "echo2.png",
+      "shape": [
+        1080,
+        1306,
+        3
+      ],
+      "sha256": "670d354a86ba6180be240c169337c38b6cda38735485171561623ca951ca3501"
+    },
+    {
+      "path": "french_0.jpg",
+      "shape": [
+        1024,
+        692,
+        3
+      ],
+      "sha256": "549784c349af8a87d53e2fec897d03aa800ed73a64bb9d8de60485cdd71d1e98"
+    },
+    {
+      "path": "ger_1.jpg",
+      "shape": [
+        270,
+        360,
+        3
+      ],
+      "sha256": "b544c22edfaee05effb8caf6aa1a8ac2bd1121bf3674569737b6b900460f9105"
+    },
+    {
+      "path": "ger_2.jpg",
+      "shape": [
+        530,
+        398,
+        3
+      ],
+      "sha256": "7ad6e4289833f18b842bb0a7cc74cfd49f09ea9cbfe2151c9b5b572a6d398ade"
+    },
+    {
+      "path": "japan_1.jpg",
+      "shape": [
+        170,
+        296,
+        3
+      ],
+      "sha256": "b4e0f3fabcb68eb0e18f9fac6d12a51f5e47a52abd57065ba8517dfe332315a2"
+    },
+    {
+      "path": "japan_2.jpg",
+      "shape": [
+        839,
+        1536,
+        3
+      ],
+      "sha256": "ef908e21dd5353fc70ef4c8bd9f47ce4ff831fae322eef9de53805182ed1cf1a"
+    },
+    {
+      "path": "korean_1.jpg",
+      "shape": [
+        781,
+        918,
+        3
+      ],
+      "sha256": "eb547f1a36bf85a4edf30cb3fc2752088f3de0657d022d24903a742612dd6495"
+    },
+    {
+      "path": "long_text.png",
+      "shape": [
+        108,
+        826,
+        3
+      ],
+      "sha256": "db8d085b5fa5f1a4561d470f972a29ebfa677abdb228a0fba8987220cf90be3e"
+    },
+    {
+      "path": "model_prod_flow_ch.png",
+      "shape": [
+        215,
+        1896,
+        3
+      ],
+      "sha256": "8c075588ba6ec510d48a8f00289a21726df68cdacec9dfba0b043c460d7ce579"
+    },
+    {
+      "path": "myQR.jpg",
+      "shape": [
+        1296,
+        950,
+        3
+      ],
+      "sha256": "b1c1fc168bfbac24811dd63eca82a9b1789bb235e2922c4c1d8ded35dc299ffc"
+    },
+    {
+      "path": "onnxocr_logo.png",
+      "shape": [
+        579,
+        584,
+        3
+      ],
+      "sha256": "147abe2bdf97bc5c68f3a637472a38f61632b9cc8c13a908aa3a4a7dfed32b7c"
+    },
+    {
+      "path": "qq.jpg",
+      "shape": [
+        2055,
+        1156,
+        3
+      ],
+      "sha256": "cb731ba44747185fe8d1dbd285b5b2b80e78b47c6379a60dd735af169ed4a689"
+    },
+    {
+      "path": "wechat.jpg",
+      "shape": [
+        1449,
+        1031,
+        3
+      ],
+      "sha256": "63b1ea98ad17ed57031a7cb153843a3078f1177ec57bc1273547210928fb08e3"
+    },
+    {
+      "path": "weixin_pay.jpg",
+      "shape": [
+        1719,
+        1263,
+        3
+      ],
+      "sha256": "a5c2e59f724773437bcdf72ca2e5b90c86b72c06b214941ac12557b322348226"
+    },
+    {
+      "path": "zhifubao_pay.jpg",
+      "shape": [
+        1620,
+        1080,
+        3
+      ],
+      "sha256": "9849fff1b67f230f964f8a17f551a9e0eb0b245d6ddb0360e06562bae2707aad"
+    }
+  ],
+  "command": [
+    "scripts/compare_ppocr.py"
+  ]
+}

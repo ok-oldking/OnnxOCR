@@ -165,3 +165,5 @@ cython_debug/
 /dist_deploy
 # Runtime-compiled ONNX Runtime and OpenVINO model caches
 /cache/
+# Optional official v6 models are fetched with scripts/download_ppocrv6.py.
+/onnxocr/models/ppocrv6/

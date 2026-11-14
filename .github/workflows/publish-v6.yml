@@ -1,0 +1,98 @@
+name: Publish PP-OCRv6 small package
+
+on:
+  push:
+    tags:
+      - "ppocrv6-v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and test v6 small distributions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify tag matches v6 package version
+        if: github.event_name == 'push'
+        shell: python
+        run: |
+          import os
+          import pathlib
+          import tomllib
+
+          profile = tomllib.loads(pathlib.Path("packaging/ppocrv6.toml").read_text("utf-8"))
+          expected_tag = f"ppocrv6-v{profile['project']['version']}"
+          actual_tag = os.environ["GITHUB_REF_NAME"]
+          if actual_tag != expected_tag:
+              raise SystemExit(f"Tag {actual_tag!r} does not match v6 version {expected_tag!r}")
+
+      - name: Install build and smoke-test dependencies
+        run: |
+          python -m pip install --upgrade build twine tomli-w pyyaml
+          python -m pip install numpy opencv-python-headless pillow pyclipper shapely onnxruntime "openvino>=2026.4.1"
+
+      - name: Download pinned official small models
+        run: python scripts/download_ppocrv6.py --tiers small
+
+      - name: Build source and wheel distributions
+        run: |
+          python scripts/build_ppocrv6.py
+          python -m twine check dist/ppocrv6/*
+
+      - name: Verify artifacts and smoke-test the installed wheel
+        run: python scripts/check_ppocrv6.py --smoke --backends onnxruntime openvino
+
+      - name: Store v6 package distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: ppocrv6-small-distributions
+          path: dist/ppocrv6/
+          if-no-files-found: error
+
+  publish:
+    name: Publish v6 small distributions to PyPI
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/onnxocr-ppocrv6/
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Retrieve v6 package distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: ppocrv6-small-distributions
+          path: dist/
+
+      - name: Publish v6 package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  release:
+    name: Create v6 GitHub release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Create release for tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          --repo "$GITHUB_REPOSITORY"
+          --title "PP-OCRv6 small $GITHUB_REF_NAME"
+          --generate-notes

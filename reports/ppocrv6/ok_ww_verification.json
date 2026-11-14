@@ -1,0 +1,51 @@
+{
+  "python": "E:\\projects\\ok-wuthering-waves\\.venv\\Scripts\\python.exe",
+  "onnxocr_import": "E:\\projects\\OnnxOCR\\onnxocr\\__init__.py",
+  "ok_import": "E:\\projects\\ok-script\\ok\\__init__.py",
+  "configured_ocr": {
+    "lib": "onnxocr",
+    "auto_simplify": true,
+    "params": {
+      "use_openvino": true,
+      "use_npu": true
+    }
+  },
+  "cases": [
+    {
+      "name": "default model and backend",
+      "passed": true
+    },
+    {
+      "name": "game confirmation screenshot through BaseTask.ocr",
+      "passed": true,
+      "texts": [
+        "提示",
+        "确认离开",
+        "重新挑战",
+        "确认"
+      ]
+    },
+    {
+      "name": "game record crop and regex through BaseTask.ocr",
+      "passed": true,
+      "texts": [
+        "最高纪录：4960"
+      ]
+    }
+  ],
+  "loaded_defaults": {
+    "det_model_dir": "E:\\projects\\OnnxOCR\\onnxocr\\models\\ppocrv6\\small\\det\\det.onnx",
+    "rec_model_dir": "E:\\projects\\OnnxOCR\\onnxocr\\models\\ppocrv6\\small\\rec\\rec.onnx",
+    "rec_char_dict_path": "E:\\projects\\OnnxOCR\\onnxocr\\models\\ppocrv6\\small\\ppocrv6_dict.txt"
+  },
+  "recognition_classes": 18710,
+  "npu_requested": true,
+  "actual_devices": {
+    "det": "NPU",
+    "rec": "NPU"
+  },
+  "tests_run": 3,
+  "failures": 0,
+  "errors": 0,
+  "passed": true
+}

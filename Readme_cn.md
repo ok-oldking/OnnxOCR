@@ -8,6 +8,11 @@
 安装包内包含 PP-OCRv5 的文字检测、方向分类、文字识别模型以及字符字典。
 本项目只负责模型推理，不包含训练和模型转换流程。
 
+直接从本地源码导入（包括 ok-script 的本地导入）时，默认使用 **PP-OCRv6 small**。
+首次使用新检出的源码前，运行 `python -m pip install pyyaml` 和
+`python scripts/download_ppocrv6.py --tiers small` 下载模型。
+`onnxocr-ppocrv5` 发布包在构建时仍选择与包内模型一致的 v5 默认值。
+
 ## 功能特性
 
 - **支持两种推理后端：** 同一套 PP-OCRv5 流程可分别使用 ONNX Runtime 或
@@ -46,7 +51,7 @@
 | `onnx` | `onnxruntime` | ONNX Runtime 推理 |
 | `openvino` | `openvino` | OpenVINO CPU 或 Intel NPU 推理 |
 | `dev` | NumPy、无界面版 OpenCV、`onnxruntime`、`openvino`、`pytest` | 同时覆盖两个后端的完整开发和测试环境 |
-| `build` | `build`、`twine` | 构建和验证发布文件 |
+| `build` | `build`、`twine`、`tomli-w`、PyYAML | 构建和验证 v5/v6 发布文件 |
 
 `dev` 依赖组已经包含两个推理后端和测试套件需要的所有 Python 包。
 如果同一环境还需要构建发布包，再组合 `build` 依赖组：

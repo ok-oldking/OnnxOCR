@@ -1,0 +1,24 @@
+# Shared dependencies and metadata are inherited from the root pyproject.toml.
+# This profile has an independent version and release tag: ppocrv6-v0.0.1.
+[project]
+name = "onnxocr-ppocrv6"
+version = "0.0.1"
+description = "ONNX-based OCR with bundled PP-OCRv6 small models."
+readme = "Readme_v6.md"
+
+[tool.onnxocr]
+model-directory = "ppocrv6/small"
+character-dictionary = "ppocrv6_dict.txt"
+
+[tool.setuptools.package-data]
+onnxocr = [
+    "fonts/simfang.ttf",
+    "models/ppocrv6/small/ppocrv6_dict.txt",
+    "models/ppocrv6/small/manifest.json",
+    "models/ppocrv6/small/det/det.onnx",
+    "models/ppocrv6/small/det/inference.yml",
+    "models/ppocrv6/small/rec/rec.onnx",
+    "models/ppocrv6/small/rec/inference.yml",
+    # Reuse the existing optional 0/180-degree classifier.
+    "models/ppocrv5/cls/cls.onnx",
+]
